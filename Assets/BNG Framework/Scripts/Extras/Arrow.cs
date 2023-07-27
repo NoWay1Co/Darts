@@ -19,7 +19,7 @@ namespace BNG {
         //float destroyTime = 1000f; // Time in seconds to destroy dart
         //Coroutine queueDestroy;
 
-        public Projectile ProjectileObject;
+        //public Projectile ProjectileObject;
 
         // Get this value from the ProjectileObject
         float arrowDamage;
@@ -31,14 +31,14 @@ namespace BNG {
             ShaftCollider = GetComponent<Collider>();
             grab = GetComponent<Grabbable>();
 
-            if(ProjectileObject == null) {
-                ProjectileObject = gameObject.AddComponent<Projectile>();
-                ProjectileObject.Damage = 50;
-                ProjectileObject.StickToObject = true;
-                ProjectileObject.enabled = false;
-            }
+            //if(ProjectileObject == null) {
+            //    ProjectileObject = gameObject.AddComponent<Projectile>();
+            //    ProjectileObject.Damage = 50;
+            //    ProjectileObject.StickToObject = true;
+            //    ProjectileObject.enabled = false;
+            //}
 
-            arrowDamage = ProjectileObject.Damage;
+            //arrowDamage = ProjectileObject.Damage;
         }
 
         void FixedUpdate()
