@@ -9,7 +9,7 @@ namespace BNG {
     public class Arrow : MonoBehaviour {
         Rigidbody rb;
         Grabbable grab;
-        public bool Flying = false; //change to true
+        public bool Flying = true; 
         public float ZVel = 0;
 
         public Collider ShaftCollider;
@@ -77,7 +77,7 @@ namespace BNG {
             // This prevents the dart from shooting ourselves, the hands, etc.
             // If you want the dart to still have physics while attached,
             // parent a collider to the dart near the tip
-            int waitFrames = 20;
+            int waitFrames = 5;
             ShaftCollider.enabled = false;
 
             for (int x = 0; x < waitFrames; x++)
