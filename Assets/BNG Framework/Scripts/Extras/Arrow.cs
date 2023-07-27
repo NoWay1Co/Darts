@@ -9,15 +9,15 @@ namespace BNG {
     public class Arrow : MonoBehaviour {
         Rigidbody rb;
         Grabbable grab;
-        public bool Flying = false; //change to true
+        public bool Flying = false;
         public float ZVel = 0;
 
         public Collider ShaftCollider;
         AudioSource impactSound;
 
         float flightTime = 0f;
-        //float destroyTime = 1000f; // Time in seconds to destroy dart
-        //Coroutine queueDestroy;
+        float destroyTime = 10f; // Time in seconds to destroy arrow
+        Coroutine queueDestroy;
 
         public Projectile ProjectileObject;
 
@@ -41,47 +41,59 @@ namespace BNG {
             arrowDamage = ProjectileObject.Damage;
         }
 
-        void FixedUpdate()
-        {
+        void FixedUpdate() {
 
             bool beingHeld = grab != null && grab.BeingHeld;
 
-            if (!beingHeld)
-            {
-                Flying = true;
-            }
-
-            ReEnableCollider();
-
-
-            // Align dart with velocity
-            if (!beingHeld && rb != null && rb.velocity != Vector3.zero && Flying && ZVel > 0.02)
-            {
+            // Align arrow with velocity
+            if (!beingHeld && rb != null && rb.velocity != Vector3.zero && Flying && ZVel > 0.02) {
                 rb.rotation = Quaternion.LookRotation(rb.velocity);
             }
 
             ZVel = transform.InverseTransformDirection(rb.velocity).z;
 
-            if (Flying)
-            {
+            if (Flying) {
                 flightTime += Time.fixedDeltaTime;
             }
 
-            
+            // Cancel Destroy if we just picked this up
+            if(queueDestroy != null && grab != null && grab.BeingHeld) {
+                StopCoroutine(queueDestroy);
+            }
         }
 
-        IEnumerator ReEnableCollider()
-        {
+        public void ShootArrow(Vector3 shotForce) {
 
-            // Wait a few frames before re-enabling collider
-            // This prevents the dart from shooting ourselves, the hands, etc.
-            // If you want the dart to still have physics while attached,
-            // parent a collider to the dart near the tip
-            int waitFrames = 20;
-            ShaftCollider.enabled = false;
+            flightTime = 0f;
+            Flying = true;
 
-            for (int x = 0; x < waitFrames; x++)
-            {
+            transform.parent = null;
+
+            rb.isKinematic = false;
+            rb.useGravity = true;
+            rb.collisionDetectionMode = CollisionDetectionMode.Continuous;
+            rb.constraints = RigidbodyConstraints.None;
+            rb.AddForce(shotForce, ForceMode.VelocityChange);
+            StartCoroutine(ReEnableCollider());
+            queueDestroy = StartCoroutine(QueueDestroy());
+        }
+
+        IEnumerator QueueDestroy() {
+            yield return new WaitForSeconds(destroyTime);
+
+            if (grab != null && !grab.BeingHeld && transform.parent == null) {
+                Destroy(this.gameObject);
+            }
+        }
+
+        IEnumerator ReEnableCollider() {
+
+            // Wait a few frames before re-enabling collider on bow shaft
+            // This prevents the arrow from shooting ourselves, the bow, etc.
+            // If you want the arrow to still have physics while attached,
+            // parent a collider to the arrow near the tip
+            int waitFrames = 3;
+            for (int x = 0; x < waitFrames; x++) {
                 yield return new WaitForFixedUpdate();
             }
 
@@ -95,42 +107,45 @@ namespace BNG {
                 return;
             }
 
-            // don't count collisions if being held
-            if (grab != null && grab.BeingHeld)
-            {
+            // Don't count collisions if being held
+            if(grab != null && grab.BeingHeld) {
                 return;
             }
 
             // Don't Count Triggers
-            if (collision.collider.isTrigger) {
+            if(collision.collider.isTrigger) {
                 return;
             }
 
             string colNameLower = collision.transform.name.ToLower();
            
-            // Ignore other very close darts
-            if (flightTime < 1 && (colNameLower.Contains("dart") || colNameLower.Contains("righthandanchor") || colNameLower.Contains("lefthandanchor"))) //doesn't work :c
-            {
+            // Ignore other very close bows and arrows
+            if (flightTime < 1 && (colNameLower.Contains("arrow") || colNameLower.Contains("bow"))) {
                 Physics.IgnoreCollision(collision.collider, ShaftCollider, true);
                 return;
-            }            
+            }
+
+            // ignore player collision if quick shot
+            if (flightTime < 1 && collision.transform.name.ToLower().Contains("player")) {
+                Physics.IgnoreCollision(collision.collider, ShaftCollider, true);
+                return;
+            }
 
             // Damage if possible
             float zVel = System.Math.Abs(transform.InverseTransformDirection(rb.velocity).z);
             bool doStick = true;
-
-            //if (zVel > 0.02f && !rb.isKinematic) {
+            if (zVel > 0.02f && !rb.isKinematic) {
                 
-            //    Damageable d = collision.gameObject.GetComponent<Damageable>();
-            //    if (d) {
-            //        d.DealDamage(arrowDamage, collision.GetContact(0).point, collision.GetContact(0).normal, true, gameObject, collision.collider.gameObject);
-            //    }
+                Damageable d = collision.gameObject.GetComponent<Damageable>();
+                if (d) {
+                    d.DealDamage(arrowDamage, collision.GetContact(0).point, collision.GetContact(0).normal, true, gameObject, collision.collider.gameObject);
+                }
 
-            //    // Don't stick to dead objects
-            //    if (d != null && d.Health <= 0) {
-            //        doStick = false;
-            //    }
-            //}
+                // Don't stick to dead objects
+                if (d != null && d.Health <= 0) {
+                    doStick = false;
+                }
+            }
             
             // Check to stick to object
             if (!rb.isKinematic && Flying) {
@@ -176,7 +191,7 @@ namespace BNG {
                 rb.constraints = RigidbodyConstraints.FreezeAll;
                 rb.WakeUp();
             }
-            // Finally, try parenting or just setting the dart to kinematic
+            // Finally, try parenting or just setting the arrow to kinematic
             else {
                 if (collision.transform.localScale == Vector3.one) {
                     transform.SetParent(collision.transform);
