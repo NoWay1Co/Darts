@@ -21,8 +21,8 @@ namespace BNG {
 
         //public Projectile ProjectileObject;
 
-        // Get this value from the ProjectileObject
-        float arrowDamage;
+        //// Get this value from the ProjectileObject
+        //float arrowDamage;
 
         // Start is called before the first frame update
         void Start() {
