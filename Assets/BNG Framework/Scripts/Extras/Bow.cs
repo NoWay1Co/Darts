@@ -391,9 +391,9 @@ namespace BNG {
                 arrowGrabbable.AddControllerVelocityOnDrop = true;
             }
 
-            // Calculate shot force
-            float shotForce = BowForce * StringDistance;
-            GrabbedArrow.ShootArrow(GrabbedArrow.transform.forward * shotForce);
+            //// Calculate shot force
+            //float shotForce = BowForce * StringDistance;
+            //GrabbedArrow.ShootArrow(GrabbedArrow.transform.forward * shotForce);
 
             // Make sure hands are showing if we hid them
             arrowGrabber.ResetHandGraphics();
